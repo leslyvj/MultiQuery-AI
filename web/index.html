@@ -1,0 +1,897 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Multimodal RAG System - NTRO</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Arial, sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 2em;
+    }
+    .subtitle {
+      text-align: center;
+      color: #7f8c8d;
+      margin-bottom: 30px;
+      font-size: 0.9em;
+    }
+    .box { 
+      border: 2px solid #e0e0e0; 
+      padding: 20px; 
+      border-radius: 10px; 
+      margin-bottom: 25px;
+      background: #fafafa;
+    }
+    .box h3 {
+      margin-top: 0;
+      color: #34495e;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    textarea { 
+      width: 100%; 
+      height: 100px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    input[type="file"] { 
+      display: block; 
+      margin: 12px 0;
+      padding: 10px;
+      border: 2px dashed #ddd;
+      border-radius: 6px;
+      width: 100%;
+      cursor: pointer;
+    }
+    input[type="file"]:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+    }
+    button { 
+      padding: 12px 24px; 
+      border-radius: 6px; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; 
+      border: none; 
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .stats-bar {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      flex: 1;
+      min-width: 150px;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 2em;
+      font-weight: bold;
+      color: #667eea;
+    }
+    .stat-label {
+      color: #7f8c8d;
+      font-size: 0.85em;
+      margin-top: 5px;
+    }
+    .answer-box {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+      margin: 20px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .answer-box h2 {
+      color: #2c3e50;
+      font-size: 1.3em;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 5px;
+    }
+    .answer-box h2:first-child {
+      margin-top: 0;
+    }
+    .answer-box ul, .answer-box ol {
+      margin: 10px 0;
+      padding-left: 25px;
+    }
+    .answer-box li {
+      margin: 8px 0;
+      line-height: 1.6;
+    }
+    .answer-box p {
+      margin: 12px 0;
+      line-height: 1.8;
+    }
+    .answer-box strong {
+      color: #2c3e50;
+      font-weight: 600;
+    }
+    .answer-box code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+    .source-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 12px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    .source-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-color: #667eea;
+    }
+    .source-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .citation-badge {
+      background: #667eea;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.85em;
+    }
+    .file-icon {
+      font-size: 1.5em;
+    }
+    .source-filename {
+      font-weight: 600;
+      color: #2c3e50;
+      flex: 1;
+    }
+    .similarity-badge {
+      background: #27ae60;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.75em;
+    }
+    .source-content {
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 0.9em;
+      line-height: 1.5;
+      max-height: 100px;
+      overflow-y: auto;
+      color: #555;
+    }
+    .source-meta {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      font-size: 0.85em;
+      color: #7f8c8d;
+    }
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .view-source-btn {
+      background: #3498db;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 0.85em;
+      display: inline-block;
+      margin-top: 8px;
+    }
+    .view-source-btn:hover {
+      background: #2980b9;
+    }
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: #7f8c8d;
+    }
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .upload-result {
+      margin-top: 15px;
+      padding: 12px;
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      border-radius: 6px;
+      color: #155724;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #95a5a6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Multimodal RAG System</h1>
+    <div class="subtitle">Offline Retrieval-Augmented Generation | NTRO</div>
+
+    <!-- Statistics Bar -->
+    <div class="stats-bar" id="statsBar" style="display:none;">
+      <div class="stat-card">
+        <div class="stat-number" id="totalChunks">0</div>
+        <div class="stat-label">Total Chunks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="totalDocs">0</div>
+        <div class="stat-label">Documents</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="totalImages">0</div>
+        <div class="stat-label">Images</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="totalAudio">0</div>
+        <div class="stat-label">Audio Files</div>
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="box">
+      <h3>📁 Upload & Index Files</h3>
+      <p style="color:#7f8c8d; font-size:0.9em; margin-bottom:15px;">
+        Supports: PDF, DOCX, TXT, Images (PNG, JPG), Audio (MP3, WAV, M4A, FLAC)
+      </p>
+      <input id="files" type="file" multiple accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.bmp,.mp3,.wav,.m4a,.flac" />
+      <button onclick="upload()" id="uploadBtn">📤 Upload & Index</button>
+      <div id="uploadResult"></div>
+    </div>
+
+    <!-- Query Section -->
+    <div class="box">
+      <h3>💬 Ask Questions</h3>
+      <p style="color:#7f8c8d; font-size:0.9em; margin-bottom:15px;">
+        Choose your search mode: Text, Image, or Audio query
+      </p>
+      
+      <!-- Search Mode Selector -->
+      <div style="margin-bottom: 20px;">
+        <label style="font-weight:600; color:#34495e; display:block; margin-bottom:8px;">🎯 Search Mode</label>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+          <button onclick="switchMode('text')" id="modeText" style="flex:1; background:#667eea;">📝 Text Query</button>
+          <button onclick="switchMode('image')" id="modeImage" style="flex:1; background:#95a5a6;">🖼️ Image Query</button>
+          <button onclick="switchMode('audio')" id="modeAudio" style="flex:1; background:#95a5a6;">🎵 Audio Query</button>
+        </div>
+      </div>
+      
+      <!-- Text Query -->
+      <div id="textQuerySection" style="margin-bottom: 20px;">
+        <label style="font-weight:600; color:#34495e; display:block; margin-bottom:8px;">🔤 Enter Your Question</label>
+        <textarea id="query" placeholder="Type your question here, e.g., 'Explain metafac framework' or 'What are the ingredients for one pan chicken?'"></textarea>
+        <button onclick="ask()" id="askBtn" style="margin-top:10px;">🔍 Search & Answer</button>
+      </div>
+      
+      <!-- Image Query -->
+      <div id="imageQuerySection" style="display:none; border-top: 2px dashed #ddd; padding-top: 20px;">
+        <label style="font-weight:600; color:#34495e; display:block; margin-bottom:8px;">🖼️ Upload Query Image</label>
+        <p style="color:#7f8c8d; font-size:0.85em; margin-bottom:10px;">
+          Upload an image or screenshot - the system will find similar images and related content
+        </p>
+        <input id="queryImage" type="file" accept=".png,.jpg,.jpeg,.bmp" style="border-style:solid;" />
+        <button onclick="askByImage()" id="askImageBtn" style="margin-top:10px;">🔍 Search by Image</button>
+      </div>
+      
+      <!-- Audio Query -->
+      <div id="audioQuerySection" style="display:none; border-top: 2px dashed #ddd; padding-top: 20px;">
+        <label style="font-weight:600; color:#34495e; display:block; margin-bottom:8px;">🎵 Upload Query Audio</label>
+        <p style="color:#7f8c8d; font-size:0.85em; margin-bottom:10px;">
+          Upload an audio file - it will be transcribed and used to search for similar content
+        </p>
+        <input id="queryAudio" type="file" accept=".mp3,.wav,.m4a,.flac" style="border-style:solid;" />
+        <button onclick="askByAudio()" id="askAudioBtn" style="margin-top:10px;">🔍 Search by Audio</button>
+      </div>
+      
+      <div id="resultsContainer" style="display:none;">
+        <h4 style="margin-top:25px; color:#2c3e50;">📝 Answer</h4>
+        <div class="answer-box" id="answer"></div>
+        
+        <h4 style="color:#2c3e50;">📚 Sources & Citations</h4>
+        <div id="sources"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Load stats on page load
+    window.addEventListener('load', loadStats);
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/stats/');
+        const data = await res.json();
+        if (data.total_chunks > 0) {
+          document.getElementById('statsBar').style.display = 'flex';
+          document.getElementById('totalChunks').textContent = data.total_chunks;
+          document.getElementById('totalDocs').textContent = data.by_type.document || 0;
+          document.getElementById('totalImages').textContent = data.by_type.image || 0;
+          document.getElementById('totalAudio').textContent = data.by_type.audio || 0;
+        }
+      } catch(e) {
+        console.log('Stats not available yet');
+      }
+    }
+
+    async function upload(){
+      const inp = document.getElementById('files');
+      const files = inp.files;
+      if(files.length === 0){ 
+        alert("Please select files to upload"); 
+        return; 
+      }
+      
+      const btn = document.getElementById('uploadBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Uploading & Indexing...';
+      
+      const fd = new FormData();
+      for(let i=0; i<files.length; i++) fd.append('files', files[i]);
+      
+      try {
+        const res = await fetch('/upload/', {method:'POST', body: fd});
+        
+        // Check if response is OK
+        if (!res.ok) {
+          const text = await res.text();
+          let errorMsg = `Server error: ${res.status}`;
+          try {
+            const json = JSON.parse(text);
+            errorMsg = json.error || json.message || errorMsg;
+          } catch {
+            // If not JSON, show first 100 chars of response
+            errorMsg = text.substring(0, 100);
+          }
+          throw new Error(errorMsg);
+        }
+        
+        const j = await res.json();
+        
+        // Check for error in response
+        if (j.error) {
+          throw new Error(j.error);
+        }
+        
+        // Build result message with OCR details
+        let resultHTML = `
+          <div class="upload-result">
+            ✅ ${j.message || `Successfully uploaded and indexed ${files.length} file(s)!`}
+          </div>
+        `;
+        
+        // Show OCR extracted text if available
+        if (j.details && j.details.length > 0) {
+          for (const detail of j.details) {
+            // Display IMAGE OCR text
+            if (detail.type === 'image' && detail.ocr_text) {
+              resultHTML += `
+                <div style="margin-top: 15px; padding: 15px; background: #f0f4ff; border-left: 4px solid #667eea; border-radius: 6px;">
+                  <div style="font-weight: bold; color: #667eea; margin-bottom: 8px;">
+                    �️ Extracted Text from "${detail.filename}" (${detail.ocr_char_count} characters using ${detail.ocr_backend})
+                  </div>
+                  <div style="background: white; padding: 12px; border-radius: 4px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">
+${detail.ocr_text}
+                  </div>
+                  <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                    ✅ Visual embedding created | ✅ ${detail.text_chunks || 0} text chunks indexed
+                  </div>
+                </div>
+              `;
+            }
+            // Display AUDIO transcription
+            else if (detail.type === 'audio' && detail.transcribed_text) {
+              resultHTML += `
+                <div style="margin-top: 15px; padding: 15px; background: #fff4e6; border-left: 4px solid #ff9800; border-radius: 6px;">
+                  <div style="font-weight: bold; color: #ff9800; margin-bottom: 8px;">
+                    🎵 Transcribed Audio "${detail.filename}" (${detail.char_count} characters, ${detail.duration_seconds}s)
+                  </div>
+                  <div style="background: white; padding: 12px; border-radius: 4px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">
+${detail.transcribed_text}
+                  </div>
+                  <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                    ✅ ${detail.chunks} audio chunks indexed | ✅ ~${detail.word_count} words
+                  </div>
+                </div>
+              `;
+            }
+            // Display DOCUMENT text
+            else if (detail.type === 'document' && detail.extracted_text) {
+              resultHTML += `
+                <div style="margin-top: 15px; padding: 15px; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 6px;">
+                  <div style="font-weight: bold; color: #4caf50; margin-bottom: 8px;">
+                    📄 Extracted Text from ${detail.doc_type} "${detail.filename}" (${detail.char_count} characters)
+                  </div>
+                  <div style="background: white; padding: 12px; border-radius: 4px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">
+${detail.extracted_text}
+                  </div>
+                  <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                    ✅ ${detail.chunks} text chunks indexed | ✅ ~${detail.word_count} words
+                  </div>
+                </div>
+              `;
+            }
+          }
+        }
+        
+        document.getElementById('uploadResult').innerHTML = resultHTML;
+        inp.value = '';
+        loadStats(); // Refresh stats
+      } catch(e) {
+        console.error('Upload error:', e);
+        document.getElementById('uploadResult').innerHTML = `
+          <div style="background:#f8d7da; border-color:#f5c6cb; color:#721c24; padding:12px; border-radius:6px;">
+            ❌ Error: ${e.message}
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '📤 Upload & Index';
+      }
+    }
+
+    function getFileIcon(type) {
+      const icons = {
+        'document': '📄',
+        'image': '🖼️',
+        'audio': '🎵',
+        'unknown': '📎'
+      };
+      return icons[type] || icons['unknown'];
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function markdownToHTML(text) {
+      if (!text) return '';
+      
+      // Convert markdown to HTML for better rendering
+      let html = text;
+      
+      // Headers (## Header -> <h2>Header</h2>)
+      html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      
+      // Bold (**text** -> <strong>text</strong>)
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      
+      // Bullet points (- item -> <li>item</li>)
+      html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+      
+      // Wrap consecutive <li> in <ul>
+      html = html.replace(/(<li>.*?<\/li>\s*)+/gs, function(match) {
+        return '<ul>' + match + '</ul>';
+      });
+      
+      // Numbered lists (1. item -> <li>item</li>)
+      html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+      
+      // Wrap consecutive numbered <li> in <ol>
+      html = html.replace(/(<li>.*?<\/li>\s*)+/gs, function(match) {
+        // Only wrap if not already wrapped
+        if (!match.startsWith('<ul>') && !match.startsWith('<ol>')) {
+          return '<ol>' + match + '</ol>';
+        }
+        return match;
+      });
+      
+      // Line breaks (double newline -> paragraph)
+      html = html.replace(/\n\n+/g, '</p><p>');
+      html = '<p>' + html + '</p>';
+      
+      // Clean up empty paragraphs
+      html = html.replace(/<p>\s*<\/p>/g, '');
+      html = html.replace(/<p>\s*(<[huo])/g, '$1');
+      html = html.replace(/(<\/[huo][^>]*>)\s*<\/p>/g, '$1');
+      
+      return html;
+    }
+
+    async function ask(){
+      const q = document.getElementById('query').value.trim();
+      if(!q){ 
+        alert("Please type a question"); 
+        return; 
+      }
+      
+      const btn = document.getElementById('askBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Searching & Generating...';
+      
+      document.getElementById('resultsContainer').style.display = 'block';
+      document.getElementById('answer').innerHTML = '<div class="loading"><div class="spinner"></div>Generating answer...</div>';
+      document.getElementById('sources').innerHTML = '<div class="loading">Loading sources...</div>';
+      
+      try {
+        const fd = new FormData();
+        fd.append('query', q);
+        const res = await fetch('/query/', {method:'POST', body: fd});
+        
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        
+        if (!data) {
+          throw new Error('No data received from server');
+        }
+        
+        displayResults(data);
+        
+      } catch(e) {
+        console.error("Error during query:", e);
+        document.getElementById('answer').innerHTML = `<div style="color:#e74c3c;">❌ Error: ${e.message}</div>`;
+        document.getElementById('sources').innerHTML = '';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Search & Answer';
+      }
+    }
+
+    async function askByImage(){
+      const inp = document.getElementById('queryImage');
+      const file = inp.files[0];
+      if(!file){ 
+        alert("Please select an image to query"); 
+        return; 
+      }
+      
+      const btn = document.getElementById('askImageBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Processing Image...';
+      
+      document.getElementById('resultsContainer').style.display = 'block';
+      document.getElementById('answer').innerHTML = '<div class="loading"><div class="spinner"></div>Analyzing image and generating answer...</div>';
+      document.getElementById('sources').innerHTML = '<div class="loading">Loading sources...</div>';
+      
+      try {
+        const fd = new FormData();
+        fd.append('image', file);
+        const res = await fetch('/query_by_image/', {method:'POST', body: fd});
+        const data = await res.json();
+        
+        // Show OCR text if available
+        if (data.ocr_text) {
+          document.getElementById('answer').innerHTML = `
+            <div style="background:#e8f4f8; padding:10px; border-radius:6px; margin-bottom:15px; border-left:4px solid #3498db;">
+              <strong>🔍 Text detected in image:</strong><br/>
+              <em style="color:#555;">${data.ocr_text}</em>
+            </div>
+          ` + '<div class="answer-box">' + data.answer + '</div>';
+        } else {
+          displayResults(data);
+        }
+        
+        displaySources(data.sources);
+        inp.value = ''; // Clear file input
+        
+      } catch(e) {
+        document.getElementById('answer').innerHTML = `<div style="color:#e74c3c;">❌ Error: ${e.message}</div>`;
+        document.getElementById('sources').innerHTML = '';
+        console.error("Error during image query:", e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Search by Image';
+      }
+    }
+
+    function displayResults(data) {
+      // Convert markdown answer to HTML for better rendering
+      const formattedAnswer = markdownToHTML(data.answer || "No answer generated");
+      document.getElementById('answer').innerHTML = formattedAnswer;
+      displaySources(data.sources);
+    }
+
+    function displaySources(sources) {
+      const sourcesHtml = sources && sources.length > 0 
+        ? sources.map(src => {
+            const icon = getFileIcon(src.file_type);
+            const similarity = (src.similarity_score * 100).toFixed(1);
+            
+            // Relevance indicator based on score
+            let relevanceLabel = '';
+            let relevanceColor = '';
+            if (similarity >= 80) {
+              relevanceLabel = '🟢 Excellent';
+              relevanceColor = '#27ae60';
+            } else if (similarity >= 60) {
+              relevanceLabel = '🟡 Good';
+              relevanceColor = '#f39c12';
+            } else if (similarity >= 40) {
+              relevanceLabel = '🟠 Fair';
+              relevanceColor = '#e67e22';
+            } else {
+              relevanceLabel = '🔴 Low';
+              relevanceColor = '#e74c3c';
+            }
+            
+            let metaInfo = '';
+            if (src.file_type === 'audio') {
+              metaInfo = `
+                <div class="meta-item">⏱️ ${formatTime(src.start_time)} - ${formatTime(src.end_time)}</div>
+                <div class="meta-item">⏳ Duration: ${src.duration.toFixed(1)}s</div>
+              `;
+            } else if (src.file_type === 'document') {
+              metaInfo = `
+                <div class="meta-item">📑 Chunk ${src.chunk_index}</div>
+                <div class="meta-item">📍 Chars: ${src.char_start}-${src.char_end}</div>
+              `;
+            } else if (src.file_type === 'image' && src.ocr_text) {
+              metaInfo = `<div class="meta-item">🔍 OCR Available</div>`;
+            }
+            
+            return `
+              <div class="source-card">
+                <div class="source-header">
+                  <span class="citation-badge">[${src.citation_number}]</span>
+                  <span class="file-icon">${icon}</span>
+                  <span class="source-filename">${src.source_file}</span>
+                  <span class="similarity-badge" style="background: ${relevanceColor};">${similarity}% ${relevanceLabel}</span>
+                </div>
+                <div class="source-content">${src.document}</div>
+                <div class="source-meta">
+                  <div class="meta-item">📋 Type: ${src.file_type}</div>
+                  ${metaInfo}
+                </div>
+                ${src.file_path ? `<a href="/view_source/${encodeURIComponent(src.file_path)}" target="_blank" class="view-source-btn">👁️ View Source File</a>` : ''}
+              </div>
+            `;
+          }).join('')
+        : '<div class="empty-state">No sources found</div>';
+      
+      document.getElementById('sources').innerHTML = sourcesHtml;
+    }
+    
+    // Search Mode Switching
+    let currentMode = 'text';
+    
+    function switchMode(mode) {
+      currentMode = mode;
+      
+      // Hide all sections
+      document.getElementById('textQuerySection').style.display = 'none';
+      document.getElementById('imageQuerySection').style.display = 'none';
+      document.getElementById('audioQuerySection').style.display = 'none';
+      
+      // Reset button styles
+      document.getElementById('modeText').style.background = '#95a5a6';
+      document.getElementById('modeImage').style.background = '#95a5a6';
+      document.getElementById('modeAudio').style.background = '#95a5a6';
+      
+      // Show selected section and highlight button
+      if (mode === 'text') {
+        document.getElementById('textQuerySection').style.display = 'block';
+        document.getElementById('modeText').style.background = '#667eea';
+      } else if (mode === 'image') {
+        document.getElementById('imageQuerySection').style.display = 'block';
+        document.getElementById('modeImage').style.background = '#667eea';
+      } else if (mode === 'audio') {
+        document.getElementById('audioQuerySection').style.display = 'block';
+        document.getElementById('modeAudio').style.background = '#667eea';
+      }
+    }
+    
+    async function askByAudio(){
+      const inp = document.getElementById('queryAudio');
+      const file = inp.files[0];
+      if(!file){ 
+        alert("Please select an audio file to query"); 
+        return; 
+      }
+      
+      const btn = document.getElementById('askAudioBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Transcribing Audio...';
+      
+      document.getElementById('resultsContainer').style.display = 'block';
+      document.getElementById('answer').innerHTML = '<div class="loading"><div class="spinner"></div>Transcribing audio and generating answer...</div>';
+      document.getElementById('sources').innerHTML = '<div class="loading">Loading sources...</div>';
+      
+      try {
+        const fd = new FormData();
+        fd.append('search_mode', 'audio');
+        fd.append('query_audio', file);
+        
+        const res = await fetch('/query/', {method:'POST', body: fd});
+        
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        
+        if (!data) {
+          throw new Error('No data received from server');
+        }
+        
+        displayResults(data);
+        inp.value = ''; // Clear file input
+        
+      } catch(e) {
+        console.error("Error during audio query:", e);
+        document.getElementById('answer').innerHTML = `<div style="color:#e74c3c;">❌ Error: ${e.message}</div>`;
+        document.getElementById('sources').innerHTML = '';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Search by Audio';
+      }
+    }
+    
+    // Update the existing askByImage to use new endpoint format
+    async function askByImage(){
+      const inp = document.getElementById('queryImage');
+      const file = inp.files[0];
+      if(!file){ 
+        alert("Please select an image to query"); 
+        return; 
+      }
+      
+      const btn = document.getElementById('askImageBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Processing Image...';
+      
+      document.getElementById('resultsContainer').style.display = 'block';
+      document.getElementById('answer').innerHTML = '<div class="loading"><div class="spinner"></div>Analyzing image and generating answer...</div>';
+      document.getElementById('sources').innerHTML = '<div class="loading">Loading sources...</div>';
+      
+      try {
+        const fd = new FormData();
+        fd.append('search_mode', 'image');
+        fd.append('query_image', file);
+        
+        const res = await fetch('/query/', {method:'POST', body: fd});
+        
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        
+        if (!data) {
+          throw new Error('No data received from server');
+        }
+        
+        displayResults(data);
+        inp.value = ''; // Clear file input
+        
+      } catch(e) {
+        document.getElementById('answer').innerHTML = `<div style="color:#e74c3c;">❌ Error: ${e.message}</div>`;
+        document.getElementById('sources').innerHTML = '';
+        console.error("Error during image query:", e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Search by Image';
+      }
+    }
+    
+    // Update text query to include search mode
+    async function ask(){
+      const q = document.getElementById('query').value.trim();
+      if(!q){ 
+        alert("Please type a question"); 
+        return; 
+      }
+      
+      const btn = document.getElementById('askBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Searching & Generating...';
+      
+      document.getElementById('resultsContainer').style.display = 'block';
+      document.getElementById('answer').innerHTML = '<div class="loading"><div class="spinner"></div>Generating answer...</div>';
+      document.getElementById('sources').innerHTML = '<div class="loading">Loading sources...</div>';
+      
+      try {
+        const fd = new FormData();
+        fd.append('query', q);
+        fd.append('search_mode', 'text');
+        
+        const res = await fetch('/query/', {method:'POST', body: fd});
+        
+        if (!res.ok) {
+          throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        
+        if (!data) {
+          throw new Error('No data received from server');
+        }
+        
+        displayResults(data);
+        
+      } catch(e) {
+        console.error("Error during query:", e);
+        document.getElementById('answer').innerHTML = `<div style="color:#e74c3c;">❌ Error: ${e.message}</div>`;
+        document.getElementById('sources').innerHTML = '';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Search & Answer';
+      }
+    }
+    
+    // Allow Enter key to submit query (with Shift+Enter for new line)
+    document.getElementById('query').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        ask();
+      }
+    });
+  </script>
+</body>
+</html>
